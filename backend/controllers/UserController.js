@@ -1,4 +1,5 @@
 const User = require('../models/User')
+const bcrypt = require('bcrypt')
 
 module.exports = class UserController {
 
@@ -11,7 +12,6 @@ module.exports = class UserController {
             { field: 'email', message: 'O email é obrigatório!' },
             { field: 'phone', message: 'O número é obrigatório!' },
             { field: 'password', message: 'A senha é obrigatória!' },
-            { field: 'confirmpassword', message: 'As senhas não são correspondentes' }
         ];
         
         for (const validation of validations) {
@@ -21,7 +21,7 @@ module.exports = class UserController {
                 return;
             }
         }
-         
+
         // check if user exists
         const userExists = await User.findOne({ email:email })
         
@@ -29,9 +29,43 @@ module.exports = class UserController {
             res
             .status(422)
             .json({
-                message: 'Por favor, use outro!'
+                message: 'Por favor, use outro email!'
             })
             return
+        }
+
+                // check if passwords match
+        if (password !== confirmpassword) {
+            res
+            .status(422)
+            .json({
+                message: 'As senhas nao conferem!'
+            })
+            return
+        }
+
+        // create a password
+        const salt = await bcrypt.genSalt(12)
+        const passwordHash = await bcrypt.hash(password, salt)
+
+        // create a user 
+        const user = new User ({
+            name,
+            email,
+            phone,
+            password: passwordHash
+        })
+
+        try {
+            const newUser = await user.save()
+            res
+            .status(201)
+            .json({
+                message: 'Usuario Criado!',
+                newUser
+            })
+        } catch (error) {
+            res.status(500).json({message: error})
         }
     }
 }
