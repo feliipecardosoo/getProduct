@@ -8,7 +8,7 @@ const getToken = require('../helpers/get-token');
 
 module.exports = class UserController {
 
-    static async register (req, res) {
+    static async register (req,res) {
         const {name, email, phone, password, confirmpassword } = req.body
 
         // Validations
@@ -122,7 +122,7 @@ module.exports = class UserController {
         }
         res.status(200).send(currentUser)
     }
-    static async getUserById (req, res) {
+    static async getUserById (req,res) {
 
         const id = req.params.id
 
@@ -137,6 +137,14 @@ module.exports = class UserController {
             return
         }
         res.status(200).json({user})
+    }
+    static async editUser (req,res) {
+        res
+        .status(200)
+        .json({
+            message: 'Deu certo!'
+        })
+        return
     }
 }
 
