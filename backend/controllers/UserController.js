@@ -1,10 +1,12 @@
 const User = require('../models/User')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
+const mongoose = require('mongoose');
 
 // Healpers
 const createUserToken = require('../helpers/create-user-token');
 const getToken = require('../helpers/get-token');
+const getUserByToken = require('../helpers/get-user-by-token');
 
 module.exports = class UserController {
 
@@ -139,12 +141,44 @@ module.exports = class UserController {
         res.status(200).json({user})
     }
     static async editUser (req,res) {
-        res
-        .status(200)
-        .json({
-            message: 'Deu certo!'
-        })
-        return
+        const id = req.params.id;
+
+        const token = getToken(req)
+        const user = await getUserByToken(token)
+
+        const {name, email, phone, password, confirmpassword} = req.body
+        let image = ' '
+
+        // Validations
+        if(!name) {
+            return res.status(422).json({message: 'O nome é obrigatorio'})
+        }
+        user.name = name
+        
+        if(!email) {
+            return res.status(422).json({message: 'O email é obrigatorio'})
+        }
+
+        const userExists = await User.findOne({email: email})
+
+        if(user.email !== email && userExists) {
+            return res.status(422).json({message: 'Por favor utilize outro e-mail'})
+        }
+        user.email = email
+
+        if(!phone) {
+            return res.status(422).json({message: 'O telefone é obrigatorio'})
+        }
+        if(!password) {
+            return res.status(422).json({message: 'A senha é obrigatoria'})
+        }
+        if(confirmpassword !== password || !confirmpassword) {
+            return res.status(422).json({message: 'Erro na confirmacao de senha!'})
+        }
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+          return res.status(400).json({ message: 'Invalid id' });
+        }
+       
     }
 }
 
