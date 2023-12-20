@@ -169,17 +169,35 @@ module.exports = class UserController {
         if(!phone) {
             return res.status(422).json({message: 'O telefone é obrigatorio'})
         }
-        if(!password) {
-            return res.status(422).json({message: 'A senha é obrigatoria'})
+        user.phone = phone
+
+        if(password != confirmpassword) {
+            return res.status(422).json({message: 'As senhas nao conferem'})
+        } else if (password === confirmpassword && password !== null) {
+
+            // Creating password
+            const salt = await bcrypt.genSalt(12)
+            const passwordHash = await bcrypt.hash(password, salt)
+
+            user.password = passwordHash
         }
-        if(confirmpassword !== password || !confirmpassword) {
-            return res.status(422).json({message: 'Erro na confirmacao de senha!'})
-        }
+
         if (!mongoose.Types.ObjectId.isValid(id)) {
           return res.status(400).json({ message: 'Invalid id' });
         }
        
+        try {
+            // returns user updated data
+            const updated = await User.findByIdAndUpdate(
+                {_id: user._id},
+                {$set: user},
+                {new: true}
+            )
+            res.status(200).json({ message:'Usuario atualizado com Sucesso!' })
+        } catch (error) {
+            res.status(500).json({ message:err })
+        }
+
     }
 }
 
- 
