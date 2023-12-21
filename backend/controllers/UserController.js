@@ -147,7 +147,10 @@ module.exports = class UserController {
         const user = await getUserByToken(token)
 
         const {name, email, phone, password, confirmpassword} = req.body
-        let image = ' '
+        
+        if(req.file) {
+            user.image = req.file.filename
+        }
 
         // Validations
         if(!name) {
@@ -166,21 +169,27 @@ module.exports = class UserController {
         }
         user.email = email
 
-        if(!phone) {
-            return res.status(422).json({message: 'O telefone é obrigatorio'})
-        }
-        user.phone = phone
-
-        if(password != confirmpassword) {
-            return res.status(422).json({message: 'As senhas nao conferem'})
-        } else if (password === confirmpassword && password !== null) {
-
-            // Creating password
+        if (!phone) {
+            res.status(422).json({ message: 'O telefone é obrigatório!' })
+            return
+          }
+      
+          user.phone = phone
+      
+          // check if password match
+          if (password != confirmpassword) {
+            res.status(422).json({ error: 'As senhas não conferem.' })
+      
+            // change password
+          } else if (password == confirmpassword && password != null) {
+            // creating password
             const salt = await bcrypt.genSalt(12)
-            const passwordHash = await bcrypt.hash(password, salt)
-
+            const reqPassword = req.body.password
+      
+            const passwordHash = await bcrypt.hash(reqPassword, salt)
+      
             user.password = passwordHash
-        }
+          }
 
         if (!mongoose.Types.ObjectId.isValid(id)) {
           return res.status(400).json({ message: 'Invalid id' });
